@@ -1,0 +1,187 @@
+%role of node
+role role_N1(
+N1,GWN,U1:agent,
+Kug,Kn1g:symmetric_key,
+SND1,RCV1:channel(dy),
+H:hash_func
+)
+played_by N1
+def=
+local
+	State:nat,
+	NSID,Npwd,Rnum,MP,MN,RMP,ATS,RTS,CTS,Ei,Fi,MPc,T1,T2,Urnum,Uid,TS:text,
+	XGWN,UCMP,UCX,UX,UN,T5,UK,UZ:text
+const
+	chT1,chT2,chT3,chT4:protocol_id
+init
+	State := 0
+
+transition
+	%%registration process begins...
+	1. State=0 /\ RCV1(start) =|> State':=1
+	/\ NSID' := new()
+ 	/\ Npwd' := new()
+	/\ secret(NSID',s1,{N1,GWN})
+	/\ secret(Npwd',s2,{N1,GWN})
+	%% sending id and pwd to gateway node 
+	/\ SND1({NSID'.Npwd'}_Kn1g)
+	/\ witness(N1,GWN,chT1,Npwd')
+	/\ Rnum' := new()
+	/\ MP' := H(Npwd'.Rnum'.NSID')
+	/\ MN' := xor(Rnum',Npwd')
+	/\ RMP' :=xor(MP',MN')
+	%% SEND to gateway node 
+	/\ T1' :=new()
+	/\ SND1({xor(H(Npwd'.Rnum'.NSID'),xor(Rnum',Npwd')).xor(Rnum',Npwd').T1'}_Kn1g)
+	%/\ witness(N1,GWN,chT2,T1')
+	/\ SND1(T1')
+	%% RCV from GWN
+	2. State=1 /\ RCV1({xor(H(NSID'.XGWN'),H(H(NSID'.xor(xor(Rnum',Npwd'),NSID').Npwd').Npwd')).H(NSID'.XGWN').T2'}_Kn1g)=|> State':=2
+	/\ request(N1,GWN,chT3,T2')	
+	3. State=4 /\ RCV1({xor(UK',H(H(Urnum'.Uid').XGWN'))}_Kug) =|> State':=6
+	%% Ei and Fi are stored
+end role
+
+%%role of GWN
+role role_GWN(
+GWN,N1,U1:agent,
+Kug,Kn1g:symmetric_key,
+SND1,RCV1:channel(dy),
+H,F:hash_func
+)
+played_by GWN
+def=
+local
+	State:nat,
+	NSID,Npwd,MP,EPWD,Rc,MPc,Fi,Xi,Ei,Rnum,T1,T2,T3,T4:text,
+	XGWN,Uid,UMP,Upwd,Urnum,UEi,UFi,URPWD,UMI,Uxi:text
+const
+	uhT1,chT1,chT2,chT3,chT4:protocol_id
+init
+	State:=0
+
+transition
+	%% PREDEPLOYMENT Phase
+	1. State=0 /\ RCV1({NSID'.Npwd'}_Kn1g) =|> State':=1
+	/\ request(GWN,N1,chT1,Npwd')
+        % RCV from sensorNode
+	2. State=1 /\ RCV1({xor( H(Npwd'.Rnum'.NSID'),xor(Rnum',Npwd')).xor(Rnum',Npwd').T1'}_Kn1g) =|>
+	   State':=2
+	%/\ request(GWN,N1,chT2,T1')
+	/\ MP':=xor(xor( H(Npwd'.Rnum'.NSID'),xor(Rnum',Npwd')),xor(Rnum',Npwd'))
+	/\ Rc' := xor(xor(Rnum',Npwd'),NSID')
+	/\ MPc' := H(NSID'.Rc'.Npwd')
+	/\ Fi' := H(NSID'.XGWN')
+	/\ Xi' := H(MPc'.Npwd')
+	/\ Ei' := xor(Fi',Xi')
+	/\ T2'  :=new()
+	% send this info to Sensor Node
+	3. State=2 /\ RCV1(T1') =|> State':=3	
+	%/\ SND1(T2')
+	/\ SND1({xor(H(NSID'.XGWN'),H(H(NSID'.xor(xor(Rnum',Npwd'),NSID').Npwd').Npwd')).H(NSID'.XGWN').T2'}_Kn1g)
+        /\ witness(GWN,N1,chT3,T2')
+	/\ secret(Ei',sec_1,{N1,GWN})
+	% USR Registration begins
+	3. State=3 /\ RCV1({U1.F(Urnum'.Upwd').F(Urnum'.Uid').T3'}_Kug) =|> State':=4
+	/\ request(GWN,N1,uhT1,T3')
+	/\ UFi':=F(F(Urnum'.Uid').XGWN')
+	/\ URPWD':=new()
+	/\ Uxi':=F(F(Urnum'.Upwd').URPWD')
+	/\ UEi':=xor(UFi',Uxi')
+	/\ T3':=new()
+	/\ SND1({F(Urnum'.Uid').xor(F(F(Urnum'.Uid').XGWN'),F(F(Urnum'.Upwd').URPWD')).F(F(Urnum'.Uid').XGWN').URPWD'.T4'}_Kug)
+	/\ witness(GWN,U1,uhT2,T4')
+	
+	
+end role
+
+%% role of user
+role role_user(
+U1,GWN,N1:agent,
+Kug:symmetric_key,
+SND,RCV:channel(dy),
+F:hash_func
+)
+played_by U1
+def=
+local
+	State:nat,
+        Uid,UMP,Upwd,Urnum,UEi,UFi,URPWD,UMI,T3,T4,XGWN,UCMP,UCX,UX,UN,T5,UK,UZ:text
+const
+	uhT1,uhT2:protocol_id
+init
+	State:=0
+
+transition
+	1. State=0 /\ RCV(start) =|> State':=1
+	/\ Uid':=new()
+	/\ Upwd':=new()
+	/\ Urnum':=new()
+	/\ secret(Uid',c1,{U1})
+	/\ secret(Upwd',c2,{U1})
+	/\ secret(Urnum',c3,{U1})
+	/\ UMP':=F(Urnum'.Upwd')
+	/\ UMI':=F(Urnum'.Uid')
+	%send to GWN
+	/\ T3':=new()
+	/\ SND({U1.F(Urnum'.Upwd').F(Urnum'.Uid').T3'}_Kug)
+	/\ witness(U1,GWN,uhT1,T3')
+	%recieving Smart CARD
+	2. State=1 /\ RCV({F(Urnum'.Uid').xor(F(F(Urnum'.Uid').XGWN'),F(F(Urnum'.Upwd').URPWD')).F(F(Urnum'.Uid').XGWN').URPWD'.T4'}_Kug) =|>
+	 State':=2
+	/\ request(U1,GWN,uhT2,T4')
+	%% Login Phase
+	/\ UCMP':=F(Urnum'.Upwd')
+	/\ UCX':=F(UCMP'.URPWD')
+	/\ UX':=F(xor(F(F(Urnum'.Uid').XGWN'),F(F(Urnum'.Upwd').URPWD')).F(F(Urnum'.Uid').XGWN'))
+	/\ T5':=new()
+	/\ UN':=F(UX'.URPWD'.T5')
+	/\ UK':=new()
+	/\ UZ':=xor(UK',F(F(Urnum'.Uid').XGWN'))
+	/\ SND({xor(UK',H(H(Urnum'.Uid').XGWN'))}_Kug)
+	%% SND Authentication MSG
+	%/\ SND({})
+
+
+end role
+%% role session
+role session(
+N1,GWN,U1:agent,
+Kn1g:symmetric_key,
+Kug:symmetric_key,
+H,F:hash_func
+)
+def=
+local
+	SND2,RCV2,SND1,RCV1,SND3,RCV3:channel(dy)
+composition
+	role_N1(N1,GWN,U1,Kug,Kn1g,SND1,RCV1,H) /\ role_GWN(GWN,N1,U1,Kug,Kn1g,SND2,RCV2,H,F) /\ role_user(U1,GWN,N1,Kug,SND3,RCV3,F)
+
+
+
+end role
+
+%% role enviroment
+role environment()
+
+def=
+	const
+		n1,u1,g: agent,
+		kug,sk:symmetric_key,
+		h,f:hash_func,
+		c1,c2,c3,s1,s2,sec_1:protocol_id
+
+	intruder_knowledge={u1,n1,g}
+
+	composition
+		session(n1,g,u1,sk,kug,h,f)%/\ session(i,g,u1,sk,kug,h,f)/\session(n1,i,u1,sk,kug,h,f)/\session(n1,g,i,sk,kug,h,f)
+
+end role
+
+goal
+
+   secrecy_of sec_1,s1,s2,c1,c2,c3
+   authentication_on chT2,chT3,chT4,chT1,uhT1,uhT2
+
+end goal
+environment()
