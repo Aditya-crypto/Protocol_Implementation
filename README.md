@@ -1,9 +1,9 @@
 ## Protocol_Implementation
 ## OBJECTIVE:
 ##### Implement and verify a protocol, based on a scheme provided in a research paper for secure communication of sensor nodes, user node, and  a Gateway node
-###### TOOL USED: AVISPA
-###### Programming Language: HLPSL(High Level Protocol Specification Language)
-###### Results
+##### TOOL USED: AVISPA
+##### Programming Language: HLPSL(High Level Protocol Specification Language)
+##### Results
 
 ###### SUMMARY
 
