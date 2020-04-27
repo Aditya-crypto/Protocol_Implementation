@@ -6,27 +6,22 @@ Implement and verify a protocol, based on a scheme provided in a research paper 
 ##### Technolgies: 
 AVISPA, HLPSL(High Level Protocol Specification Language)
 
-##### Results
+### Results
 
-###### SUMMARY
-
+##### SUMMARY
 ###### SAFE
 
-###### DETAILS
+##### DETAILS
 ###### BOUNDED_NUMBER_OF_SESSIONS
-###### TYPED_MODEL
-
-###### PROTOCOL
+###### TYPED_MODEL:PROTOCOL
 ######  /home/phenix/semester_2/SNS/assign_2/span/testsuite/results/FINAL.if
 
-###### GOAL
-######   As specified
+###### GOAL:As specified 
 
-###### BACKEND
+##### BACKEND
 ###### CL-AtSe
 
-###### STATISTICS
-
+##### STATISTICS
 ###### Analysed   : 4 states
 ###### Reachable  : 2 states
 ###### Translation: 0.02 seconds
